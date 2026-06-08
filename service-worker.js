@@ -1,11 +1,11 @@
-const cacheName = "hhh-finance-v8";
+const cacheName = "hhh-finance-v9";
 const appShell = [
-  "/",
-  "/index.html",
-  "/styles.css?v=8",
-  "/app.js?v=8",
-  "/manifest.json",
-  "/icon.svg"
+  "./",
+  "index.html",
+  "styles.css?v=9",
+  "app.js?v=9",
+  "manifest.json",
+  "icon.svg"
 ];
 
 self.addEventListener("install", (event) => {
@@ -31,6 +31,6 @@ self.addEventListener("fetch", (event) => {
         caches.open(cacheName).then((cache) => cache.put(event.request, copy));
         return response;
       })
-      .catch(() => caches.match(event.request).then((cached) => cached || caches.match("/index.html")))
+      .catch(() => caches.match(event.request).then((cached) => cached || caches.match("index.html")))
   );
 });
