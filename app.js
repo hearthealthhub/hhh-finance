@@ -438,46 +438,6 @@ function addItemRow(item = {}) {
   updateOrderPreview();
 }
 
-function setOrderExtractStatus(message) {
-  document.querySelector("#orderExtractStatus").textContent = message;
-}
-
-function readFileAsDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(file);
-  });
-}
-
-function fillOrderDraft(draft) {
-  if (draft.customerName) document.querySelector("#customerName").value = draft.customerName;
-  if (draft.customerContact) document.querySelector("#customerContact").value = draft.customerContact;
-  if (draft.orderDate && /^\d{4}-\d{2}-\d{2}$/.test(draft.orderDate)) document.querySelector("#orderDate").value = draft.orderDate;
-  if (draft.discountType) document.querySelector("#discountType").value = draft.discountType;
-  if (draft.discountValue !== null && draft.discountValue !== undefined) document.querySelector("#discountValue").value = draft.discountValue;
-  if (draft.deliveryFee !== null && draft.deliveryFee !== undefined) document.querySelector("#deliveryFee").value = draft.deliveryFee;
-  if (draft.deliveryCost !== null && draft.deliveryCost !== undefined) document.querySelector("#deliveryCost").value = draft.deliveryCost;
-  if (draft.paymentStatus) document.querySelector("#paymentStatus").value = draft.paymentStatus;
-  if (draft.notes) document.querySelector("#orderNotes").value = draft.notes;
-
-  if (Array.isArray(draft.items) && draft.items.length) {
-    document.querySelector("#itemsContainer").innerHTML = "";
-    draft.items.forEach((item) => {
-      const matchedProduct = state.products.find((product) => product.name.toLowerCase() === String(item.name || "").toLowerCase());
-      addItemRow({
-        name: matchedProduct?.name || item.name || "",
-        qty: item.qty || 1,
-        price: item.price ?? matchedProduct?.price ?? 0,
-        cost: item.cost ?? matchedProduct?.cost ?? 0
-      });
-    });
-  }
-
-  updateOrderPreview();
-}
-
 function getDraftItems() {
   return [...document.querySelectorAll(".item-row")].map((row) => ({
     name: row.querySelector(".item-product").value,
@@ -513,8 +473,7 @@ function renderDashboard() {
   const netProfit = orderProfit - expenseTotal;
   const openLiabilities = state.liabilities.filter((item) => item.status === "open").reduce((sum, item) => sum + item.amount, 0);
   const assets = state.assets.reduce((sum, item) => sum + asNumber(item.currentValue || item.amount), 0);
-  const buffer = Math.max(0, netProfit * (asNumber(state.settings.bufferPercent) / 100));
-  const spendable = Math.max(0, netProfit - openLiabilities - buffer);
+  const founderSalary = Math.max(0, netProfit * 0.15);
 
   document.querySelector("#netProfit").textContent = money(netProfit);
   document.querySelector("#monthlyRevenue").textContent = money(revenue);
@@ -522,8 +481,8 @@ function renderDashboard() {
   document.querySelector("#monthlyOrders").textContent = `${orders.length} orders`;
   document.querySelector("#expenseCount").textContent = `${expenses.length} entries`;
   document.querySelector("#profitMargin").textContent = `${revenue ? Math.round((netProfit / revenue) * 100) : 0}% margin`;
-  document.querySelector("#spendableCash").textContent = money(spendable);
-  document.querySelector("#bufferText").textContent = `After ${state.settings.bufferPercent}% savings buffer`;
+  document.querySelector("#founderSalary").textContent = money(founderSalary);
+  document.querySelector("#founderSalaryText").textContent = "15% of monthly net profit";
   document.querySelector("#totalAssets").textContent = money(assets);
   document.querySelector("#openLiabilities").textContent = money(openLiabilities);
   document.querySelector("#netWorth").textContent = money(assets - openLiabilities);
@@ -701,68 +660,6 @@ document.querySelector("#addItemBtn").addEventListener("click", () => addItemRow
 document.querySelector("#customerName").addEventListener("change", (event) => {
   const customer = state.customers.find((c) => c.name === event.target.value);
   if (customer) document.querySelector("#customerContact").value = customer.contact || "";
-});
-
-document.querySelector("#orderImageInput").addEventListener("change", async (event) => {
-  const file = event.target.files?.[0];
-  const wrap = document.querySelector("#orderImagePreviewWrap");
-  const image = document.querySelector("#orderImagePreview");
-  if (!file) {
-    wrap.classList.add("hidden");
-    image.removeAttribute("src");
-    setOrderExtractStatus("Works best with screenshots, handwritten order notes, or chat/order confirmation photos.");
-    return;
-  }
-  image.src = await readFileAsDataUrl(file);
-  wrap.classList.remove("hidden");
-  setOrderExtractStatus("Image ready. Tap Extract Details to draft the order.");
-});
-
-document.querySelector("#clearOrderImageBtn").addEventListener("click", () => {
-  document.querySelector("#orderImageInput").value = "";
-  document.querySelector("#orderImagePreview").removeAttribute("src");
-  document.querySelector("#orderImagePreviewWrap").classList.add("hidden");
-  setOrderExtractStatus("Works best with screenshots, handwritten order notes, or chat/order confirmation photos.");
-});
-
-document.querySelector("#extractOrderBtn").addEventListener("click", async () => {
-  const file = document.querySelector("#orderImageInput").files?.[0];
-  if (!file) {
-    setOrderExtractStatus("Choose or take a photo first.");
-    return;
-  }
-  const button = document.querySelector("#extractOrderBtn");
-  button.disabled = true;
-  button.textContent = "Extracting...";
-  setOrderExtractStatus("Reading the image and drafting the order...");
-  try {
-    const imageDataUrl = await readFileAsDataUrl(file);
-    const response = await fetch("/api/extract-order", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        imageDataUrl,
-        today,
-        products: state.products.map((product) => ({
-          name: product.name,
-          sku: product.sku,
-          cost: product.cost,
-          price: product.price
-        }))
-      })
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "Extraction failed.");
-    fillOrderDraft(data);
-    setOrderExtractStatus("Draft filled. Please review every field before saving.");
-    toast("Order draft extracted.");
-  } catch (error) {
-    setOrderExtractStatus(error.message);
-    toast("Could not extract order.");
-  } finally {
-    button.disabled = false;
-    button.textContent = "Extract Details";
-  }
 });
 
 document.querySelector("#orderForm").addEventListener("submit", (event) => {
