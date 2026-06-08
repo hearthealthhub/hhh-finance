@@ -9,13 +9,13 @@
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon.svg" />
     <title>HHH-FINANCE</title>
-    <link rel="stylesheet" href="styles.css?v=7" />
+    <link rel="stylesheet" href="styles.css?v=8" />
   </head>
   <body>
     <section class="auth-screen hidden" id="authScreen">
       <form class="auth-card" id="authForm">
         <div class="brand auth-brand">
-          <div class="brand-mark">ðŸ’°</div>
+          <div class="brand-mark">💰</div>
           <div>
             <strong>HHH-FINANCE</strong>
             <span>Heart Health Hub</span>
@@ -34,7 +34,7 @@
     <div class="app-shell">
       <aside class="sidebar">
         <div class="brand">
-          <div class="brand-mark">ðŸ’°</div>
+          <div class="brand-mark">💰</div>
           <div>
             <strong id="brandName">Family Business</strong>
             <span>HHH-FINANCE</span>
@@ -43,6 +43,7 @@
         <nav class="nav" aria-label="Main sections">
           <button class="nav-item active" data-view="dashboard">Dashboard</button>
           <button class="nav-item" data-view="orders">Orders</button>
+          <button class="nav-item" data-view="income">Bonus Income</button>
           <button class="nav-item" data-view="expenses">Expenses</button>
           <button class="nav-item" data-view="assets">Assets</button>
           <button class="nav-item" data-view="liabilities">Liabilities</button>
@@ -68,22 +69,22 @@
           <div class="metrics-grid">
             <article class="metric net-profit">
               <span>Net Profit This Month</span>
-              <strong id="netProfit">â‚¦0</strong>
+              <strong id="netProfit">₦0</strong>
               <small id="profitMargin">0% margin</small>
             </article>
             <article class="metric">
               <span>Revenue</span>
-              <strong id="monthlyRevenue">â‚¦0</strong>
+              <strong id="monthlyRevenue">₦0</strong>
               <small id="monthlyOrders">0 orders</small>
             </article>
             <article class="metric">
               <span>Expenses</span>
-              <strong id="monthlyExpenses">â‚¦0</strong>
+              <strong id="monthlyExpenses">₦0</strong>
               <small id="expenseCount">0 entries</small>
             </article>
             <article class="metric spendable">
               <span>Founder Salary</span>
-              <strong id="founderSalary">â‚¦0</strong>
+              <strong id="founderSalary">₦0</strong>
               <small id="founderSalaryText">15% of monthly net profit</small>
             </article>
           </div>
@@ -92,7 +93,7 @@
             <section class="panel">
               <div class="panel-head">
                 <h2>3-Month Trend</h2>
-                <span>Revenue, expenses, profit</span>
+                <span>Income, expenses, profit</span>
               </div>
               <div class="trend-chart" id="trendChart"></div>
             </section>
@@ -102,10 +103,11 @@
                 <span>Cash position and obligations</span>
               </div>
               <div class="snapshot-list">
-                <div><span>Total assets</span><strong id="totalAssets">â‚¦0</strong></div>
-                <div><span>Open liabilities</span><strong id="openLiabilities">â‚¦0</strong></div>
-                <div><span>Net worth snapshot</span><strong id="netWorth">â‚¦0</strong></div>
-                <div><span>Average order value</span><strong id="avgOrderValue">â‚¦0</strong></div>
+                <div><span>Total assets</span><strong id="totalAssets">₦0</strong></div>
+                <div><span>Open liabilities</span><strong id="openLiabilities">₦0</strong></div>
+                <div><span>Net worth snapshot</span><strong id="netWorth">₦0</strong></div>
+                <div><span>Bonus income this month</span><strong id="bonusIncomeSnapshot">₦0</strong></div>
+                <div><span>Average order value</span><strong id="avgOrderValue">₦0</strong></div>
               </div>
             </section>
           </div>
@@ -183,13 +185,16 @@
               </label>
 
               <div class="totals-box">
-                <div><span>Subtotal</span><strong id="orderSubtotal">â‚¦0</strong></div>
-                <div><span>Discount</span><strong id="orderDiscount">â‚¦0</strong></div>
-                <div><span>Total Due</span><strong id="orderTotal">â‚¦0</strong></div>
-                <div><span>Estimated Profit</span><strong id="orderProfit">â‚¦0</strong></div>
+                <div><span>Subtotal</span><strong id="orderSubtotal">₦0</strong></div>
+                <div><span>Discount</span><strong id="orderDiscount">₦0</strong></div>
+                <div><span>Total Due</span><strong id="orderTotal">₦0</strong></div>
+                <div><span>Estimated Profit</span><strong id="orderProfit">₦0</strong></div>
               </div>
 
-              <button class="primary-btn full" type="submit">Save Order</button>
+              <div class="form-actions">
+                <button class="primary-btn full" id="saveOrderBtn" type="submit">Save Order</button>
+                <button class="ghost-btn full hidden" id="cancelEditOrderBtn" type="button">Cancel Edit</button>
+              </div>
             </form>
 
             <section class="panel">
@@ -211,6 +216,47 @@
                   <tbody id="ordersTable"></tbody>
                 </table>
               </div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="incomeView">
+          <div class="split-layout compact">
+            <form class="panel form-panel" id="bonusIncomeForm">
+              <div class="panel-head">
+                <h2>Log Bonus Income</h2>
+                <span>Bonuses, rewards, and other non-order income</span>
+              </div>
+              <div class="field-grid">
+                <label>
+                  Source
+                  <input id="bonusSource" required placeholder="Team bonus, referral bonus, promo reward" />
+                </label>
+                <label>
+                  Amount
+                  <input type="number" id="bonusAmount" min="0" step="100" required />
+                </label>
+                <label>
+                  Date Received
+                  <input type="date" id="bonusDate" required />
+                </label>
+                <label>
+                  Received By
+                  <input id="bonusReceivedBy" placeholder="You, your wife, business account" />
+                </label>
+              </div>
+              <label>
+                Notes
+                <textarea id="bonusNotes" rows="3"></textarea>
+              </label>
+              <button class="primary-btn full" type="submit">Save Bonus Income</button>
+            </form>
+            <section class="panel">
+              <div class="panel-head">
+                <h2>Bonus Income Entries</h2>
+                <span id="bonusTotalLabel">₦0 this month</span>
+              </div>
+              <div class="entry-list" id="bonusIncomeList"></div>
             </section>
           </div>
         </section>
@@ -256,7 +302,7 @@
             <section class="panel">
               <div class="panel-head">
                 <h2>Expense Entries</h2>
-                <span id="expenseTotalLabel">â‚¦0 this month</span>
+                <span id="expenseTotalLabel">₦0 this month</span>
               </div>
               <div class="entry-list" id="expenseList"></div>
             </section>
@@ -278,7 +324,7 @@
               </div>
               <button class="primary-btn full" type="submit">Save Asset</button>
             </form>
-            <section class="panel"><div class="panel-head"><h2>Assets</h2><span id="assetTotalLabel">â‚¦0 total</span></div><div class="entry-list" id="assetList"></div></section>
+            <section class="panel"><div class="panel-head"><h2>Assets</h2><span id="assetTotalLabel">₦0 total</span></div><div class="entry-list" id="assetList"></div></section>
           </div>
         </section>
 
@@ -297,7 +343,7 @@
               </div>
               <button class="primary-btn full" type="submit">Save Liability</button>
             </form>
-            <section class="panel"><div class="panel-head"><h2>Liabilities</h2><span id="liabilityTotalLabel">â‚¦0 open</span></div><div class="entry-list" id="liabilityList"></div></section>
+            <section class="panel"><div class="panel-head"><h2>Liabilities</h2><span id="liabilityTotalLabel">₦0 open</span></div><div class="entry-list" id="liabilityList"></div></section>
           </div>
         </section>
 
@@ -370,7 +416,16 @@
       </div>
     </dialog>
 
+    <dialog id="orderDetailDialog">
+      <div class="invoice" id="orderDetailContent"></div>
+      <div class="dialog-actions">
+        <button class="ghost-btn" id="closeOrderDetail">Close</button>
+        <button class="ghost-btn" id="editOrderFromDetail">Edit</button>
+        <button class="primary-btn" id="invoiceFromDetail">Invoice</button>
+      </div>
+    </dialog>
+
     <div class="toast" id="toast" role="status"></div>
-    <script src="app.js?v=7"></script>
+    <script src="app.js?v=8"></script>
   </body>
 </html>
