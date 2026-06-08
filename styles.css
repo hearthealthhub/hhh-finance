@@ -336,6 +336,10 @@ h3 {
   margin-bottom: 16px;
 }
 
+.compact-head {
+  margin-bottom: 8px;
+}
+
 .field-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -371,6 +375,39 @@ textarea {
   display: grid;
   gap: 14px;
   min-width: 0;
+}
+
+.ai-capture {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #cfe1d7;
+  border-radius: 8px;
+  background: #f7fcf9;
+  min-width: 0;
+}
+
+.image-preview {
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+}
+
+.image-preview.hidden {
+  display: none;
+}
+
+.image-preview img {
+  display: block;
+  width: 100%;
+  max-height: 260px;
+  object-fit: contain;
+}
+
+.ai-actions {
+  align-items: stretch;
 }
 
 .line-items {
@@ -675,10 +712,16 @@ dialog::backdrop {
 
   .top-actions {
     width: 100%;
+    flex-wrap: wrap;
   }
 
   .top-actions button {
-    flex: 1;
+    flex: 1 1 105px;
+  }
+
+  .top-actions .sync-pill {
+    flex: 1 1 100%;
+    justify-content: center;
   }
 
   .metrics-grid,
