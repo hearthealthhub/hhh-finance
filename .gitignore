@@ -1,0 +1,4 @@
+.npm-cache/
+.netlify/
+node_modules/
+deploy/
