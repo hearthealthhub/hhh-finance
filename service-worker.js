@@ -1,9 +1,9 @@
-const cacheName = "hhh-finance-v7";
+const cacheName = "hhh-finance-v8";
 const appShell = [
   "/",
   "/index.html",
-  "/styles.css?v=7",
-  "/app.js?v=7",
+  "/styles.css?v=8",
+  "/app.js?v=8",
   "/manifest.json",
   "/icon.svg"
 ];
