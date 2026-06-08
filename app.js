@@ -10,9 +10,9 @@ const seed = {
     tagline: "Thank you for your order."
   },
   supabase: {
-    enabled: false,
+    enabled: true,
     url: "https://shtqiwmwplinwnktmysi.supabase.co",
-    anonKey: ""
+    anonKey: "sb_publishable_KZw0-dPQqggC8gbDIhxYGg_QQpgZvFM"
   },
   auth: {
     accessToken: "",
@@ -43,6 +43,9 @@ function loadState() {
   const raw = localStorage.getItem(storeKey);
   const loaded = raw ? { ...structuredClone(seed), ...JSON.parse(raw) } : structuredClone(seed);
   loaded.supabase = { ...seed.supabase, ...(loaded.supabase || {}) };
+  loaded.supabase.enabled = true;
+  loaded.supabase.url = loaded.supabase.url || seed.supabase.url;
+  loaded.supabase.anonKey = loaded.supabase.anonKey || seed.supabase.anonKey;
   loaded.customers = loaded.customers.map((customer) => ({ id: customer.id || crypto.randomUUID(), ...customer }));
   return loaded;
 }
@@ -890,11 +893,13 @@ document.querySelector("#supabaseForm").addEventListener("submit", async (event)
 });
 
 document.querySelector("#disableSupabase").addEventListener("click", () => {
-  state.supabase.enabled = false;
+  state.supabase.enabled = true;
+  state.supabase.url = seed.supabase.url;
+  state.supabase.anonKey = seed.supabase.anonKey;
   state.auth = { accessToken: "", refreshToken: "", email: "" };
   saveState();
-  setSyncStatus("Local only", false);
-  toast("Using local storage only.");
+  setSyncStatus("Sign in needed", false, "Supabase is built in. Sign in to use shared records.");
+  toast("Signed out of shared sync.");
 });
 
 document.querySelector("#authForm").addEventListener("submit", async (event) => {
