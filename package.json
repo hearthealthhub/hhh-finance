@@ -1,0 +1,19 @@
+{
+  "name": "hhh-finance",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "render:onboarding": "remotion render remotion/entry.jsx HHHFinanceOnboarding videos/hhh-finance-onboarding.mp4 --codec=h264 --overwrite",
+    "preview:onboarding": "remotion studio remotion/entry.jsx"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.371",
+    "@remotion/media-utils": "^4.0.371",
+    "remotion": "^4.0.371"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  }
+}
