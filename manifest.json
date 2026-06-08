@@ -2,15 +2,15 @@
   "name": "HHH-FINANCE",
   "short_name": "HHH-FINANCE",
   "description": "Heart Health Hub finance dashboard for orders, expenses, assets, liabilities, and invoices.",
-  "start_url": "/",
-  "scope": "/",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#f6f7f4",
   "theme_color": "#147a5c",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/icon.svg",
+      "src": "icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
