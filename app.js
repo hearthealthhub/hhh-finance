@@ -5,7 +5,7 @@ const today = new Date().toISOString().slice(0, 10);
 const seed = {
   settings: {
     businessName: "Heart Health Hub",
-    currency: "â‚¦",
+    currency: "₦",
     bufferPercent: 20,
     tagline: "Thank you for your order."
   },
@@ -29,6 +29,7 @@ const seed = {
     { id: crypto.randomUUID(), name: "Bee Honey", sku: "FL-003", cost: 8200, price: 12000 }
   ],
   orders: [],
+  bonusIncomes: [],
   expenses: [],
   assets: [],
   liabilities: []
@@ -36,6 +37,8 @@ const seed = {
 
 let state = loadState();
 let activeInvoiceOrder = null;
+let activeDetailOrder = null;
+let editingOrderId = null;
 let isRemoteLoading = false;
 let syncMessage = "";
 
@@ -183,6 +186,16 @@ function toRemote(table, record) {
       notes: record.notes
     };
   }
+  if (table === "bonus_incomes") {
+    return {
+      id: record.id,
+      source: record.source,
+      amount: record.amount,
+      income_date: record.date,
+      received_by: record.receivedBy,
+      notes: record.notes
+    };
+  }
   if (table === "assets") {
     return {
       id: record.id,
@@ -242,6 +255,16 @@ function fromRemote(table, record) {
       notes: record.notes
     };
   }
+  if (table === "bonus_incomes") {
+    return {
+      id: record.id,
+      source: record.source,
+      amount: record.amount,
+      date: record.income_date,
+      receivedBy: record.received_by,
+      notes: record.notes
+    };
+  }
   if (table === "assets") {
     return {
       id: record.id,
@@ -286,6 +309,8 @@ async function syncAllToSupabase() {
   await replaceRemoteTable("products", state.products);
   setSyncStatus("Syncing...", false, "Saving orders...");
   await replaceRemoteTable("orders", state.orders);
+  setSyncStatus("Syncing...", false, "Saving bonus income...");
+  await replaceRemoteTable("bonus_incomes", state.bonusIncomes);
   setSyncStatus("Syncing...", false, "Saving expenses...");
   await replaceRemoteTable("expenses", state.expenses);
   setSyncStatus("Syncing...", false, "Saving assets...");
@@ -308,19 +333,20 @@ async function loadFromSupabase(options = {}) {
   isRemoteLoading = true;
   setSyncStatus("Loading sync...", false, "Checking Supabase tables...");
   try {
-    const [settingsRows, customers, products, orders, expenses, assets, liabilities] = await Promise.all([
+    const [settingsRows, customers, products, orders, bonusIncomes, expenses, assets, liabilities] = await Promise.all([
       supabaseFetch("business_settings?id=eq.singleton&select=*"),
       supabaseFetch("customers?select=*"),
       supabaseFetch("products?select=*"),
       supabaseFetch("orders?select=*"),
+      supabaseFetch("bonus_incomes?select=*"),
       supabaseFetch("expenses?select=*"),
       supabaseFetch("assets?select=*"),
       supabaseFetch("liabilities?select=*")
     ]);
-    const hasRemoteData = [customers, products, orders, expenses, assets, liabilities].some((rows) => rows.length > 0);
+    const hasRemoteData = [customers, products, orders, bonusIncomes, expenses, assets, liabilities].some((rows) => rows.length > 0);
     if (settingsRows?.[0]) state.settings = fromRemote("business_settings", settingsRows[0]);
     if (!hasRemoteData) {
-      const hasLocalData = [state.customers, state.products, state.orders, state.expenses, state.assets, state.liabilities].some((rows) => rows.length > 0);
+      const hasLocalData = [state.customers, state.products, state.orders, state.bonusIncomes, state.expenses, state.assets, state.liabilities].some((rows) => rows.length > 0);
       if (!hasLocalData) {
         const freshSeed = structuredClone(seed);
         state.customers = freshSeed.customers;
@@ -334,6 +360,7 @@ async function loadFromSupabase(options = {}) {
     state.customers = customers.map((row) => fromRemote("customers", row));
     state.products = products.map((row) => fromRemote("products", row));
     state.orders = orders.map((row) => fromRemote("orders", row));
+    state.bonusIncomes = bonusIncomes.map((row) => fromRemote("bonus_incomes", row));
     state.expenses = expenses.map((row) => fromRemote("expenses", row));
     state.assets = assets.map((row) => fromRemote("assets", row));
     state.liabilities = liabilities.map((row) => fromRemote("liabilities", row));
@@ -420,7 +447,7 @@ function addItemRow(item = {}) {
     <label>Cost
       <input type="number" class="item-cost" min="0" step="100" value="${item.cost || 0}" required />
     </label>
-    <button class="icon-btn" type="button" title="Remove item">Ã—</button>
+    <button class="icon-btn" type="button" title="Remove item">×</button>
   `;
   row.querySelector(".item-product").addEventListener("change", (event) => {
     const product = state.products.find((p) => p.name === event.target.value);
@@ -448,6 +475,7 @@ function getDraftItems() {
 }
 
 function updateOrderPreview() {
+  const editedOrder = editingOrderId ? state.orders.find((order) => order.id === editingOrderId) : null;
   const draft = {
     items: getDraftItems(),
     discountType: document.querySelector("#discountType").value,
@@ -460,17 +488,20 @@ function updateOrderPreview() {
   document.querySelector("#orderDiscount").textContent = money(totals.discount);
   document.querySelector("#orderTotal").textContent = money(totals.total);
   document.querySelector("#orderProfit").textContent = money(totals.profit);
-  document.querySelector("#nextOrderNumber").textContent = generateOrderNumber(document.querySelector("#orderDate").value || today);
+  document.querySelector("#nextOrderNumber").textContent = editedOrder ? `Editing ${editedOrder.orderNumber}` : generateOrderNumber(document.querySelector("#orderDate").value || today);
 }
 
 function renderDashboard() {
   const month = thisMonth();
   const orders = state.orders.filter((order) => getMonthKey(order.date) === month);
+  const bonusIncomes = state.bonusIncomes.filter((income) => getMonthKey(income.date) === month);
   const expenses = state.expenses.filter((expense) => getMonthKey(expense.date) === month);
-  const revenue = orders.reduce((sum, order) => sum + calculateOrder(order).total, 0);
+  const orderRevenue = orders.reduce((sum, order) => sum + calculateOrder(order).total, 0);
+  const bonusIncome = bonusIncomes.reduce((sum, income) => sum + income.amount, 0);
+  const revenue = orderRevenue + bonusIncome;
   const orderProfit = orders.reduce((sum, order) => sum + calculateOrder(order).profit, 0);
   const expenseTotal = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-  const netProfit = orderProfit - expenseTotal;
+  const netProfit = orderProfit + bonusIncome - expenseTotal;
   const openLiabilities = state.liabilities.filter((item) => item.status === "open").reduce((sum, item) => sum + item.amount, 0);
   const assets = state.assets.reduce((sum, item) => sum + asNumber(item.currentValue || item.amount), 0);
   const founderSalary = Math.max(0, netProfit * 0.15);
@@ -478,7 +509,7 @@ function renderDashboard() {
   document.querySelector("#netProfit").textContent = money(netProfit);
   document.querySelector("#monthlyRevenue").textContent = money(revenue);
   document.querySelector("#monthlyExpenses").textContent = money(expenseTotal);
-  document.querySelector("#monthlyOrders").textContent = `${orders.length} orders`;
+  document.querySelector("#monthlyOrders").textContent = `${orders.length} orders + ${money(bonusIncome)} bonuses`;
   document.querySelector("#expenseCount").textContent = `${expenses.length} entries`;
   document.querySelector("#profitMargin").textContent = `${revenue ? Math.round((netProfit / revenue) * 100) : 0}% margin`;
   document.querySelector("#founderSalary").textContent = money(founderSalary);
@@ -486,7 +517,8 @@ function renderDashboard() {
   document.querySelector("#totalAssets").textContent = money(assets);
   document.querySelector("#openLiabilities").textContent = money(openLiabilities);
   document.querySelector("#netWorth").textContent = money(assets - openLiabilities);
-  document.querySelector("#avgOrderValue").textContent = money(orders.length ? revenue / orders.length : 0);
+  document.querySelector("#bonusIncomeSnapshot").textContent = money(bonusIncome);
+  document.querySelector("#avgOrderValue").textContent = money(orders.length ? orderRevenue / orders.length : 0);
 
   renderTrend();
   renderActivity();
@@ -500,11 +532,14 @@ function renderTrend() {
   });
   const stats = months.map((month) => {
     const orders = state.orders.filter((order) => getMonthKey(order.date) === month);
+    const bonusIncomes = state.bonusIncomes.filter((income) => getMonthKey(income.date) === month);
     const expenses = state.expenses.filter((expense) => getMonthKey(expense.date) === month);
-    const revenue = orders.reduce((sum, order) => sum + calculateOrder(order).total, 0);
+    const orderRevenue = orders.reduce((sum, order) => sum + calculateOrder(order).total, 0);
+    const bonusIncome = bonusIncomes.reduce((sum, income) => sum + income.amount, 0);
+    const revenue = orderRevenue + bonusIncome;
     const orderProfit = orders.reduce((sum, order) => sum + calculateOrder(order).profit, 0);
     const expenseTotal = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-    return { month, revenue, expenses: expenseTotal, profit: orderProfit - expenseTotal };
+    return { month, revenue, expenses: expenseTotal, profit: orderProfit + bonusIncome - expenseTotal };
   });
   const max = Math.max(1, ...stats.flatMap((item) => [item.revenue, item.expenses, Math.max(0, item.profit)]));
   document.querySelector("#trendChart").innerHTML = stats
@@ -525,12 +560,13 @@ function renderTrend() {
 function renderActivity() {
   const activity = [
     ...state.orders.map((order) => ({ type: "Order", date: order.date, title: order.customerName, amount: calculateOrder(order).total })),
+    ...state.bonusIncomes.map((income) => ({ type: "Bonus Income", date: income.date, title: income.source, amount: income.amount })),
     ...state.expenses.map((expense) => ({ type: "Expense", date: expense.date, title: expense.category, amount: -expense.amount }))
   ]
     .sort((a, b) => b.date.localeCompare(a.date))
     .slice(0, 8);
   document.querySelector("#activityList").innerHTML = activity.length
-    ? activity.map((item) => `<div class="activity-item"><div><strong>${item.title}</strong><small>${item.type} â€¢ ${item.date}</small></div><strong>${money(item.amount)}</strong></div>`).join("")
+    ? activity.map((item) => `<div class="activity-item"><div><strong>${item.title}</strong><small>${item.type} • ${item.date}</small></div><strong>${money(item.amount)}</strong></div>`).join("")
     : `<div class="activity-item"><div><strong>No activity yet</strong><small>Your newest orders and expenses will appear here.</small></div></div>`;
 }
 
@@ -546,22 +582,29 @@ function renderOrders() {
         <td>${order.customerName}<small>${order.paymentStatus}</small></td>
         <td>${money(totals.total)}</td>
         <td>${money(totals.profit)}</td>
-        <td><div class="table-actions"><button class="ghost-btn small" data-invoice="${order.id}">Invoice</button><button class="ghost-btn small" data-delete-order="${order.id}">Delete</button></div></td>
+        <td><div class="table-actions"><button class="ghost-btn small" data-view-order="${order.id}">View</button><button class="ghost-btn small" data-invoice="${order.id}">Invoice</button><button class="ghost-btn small" data-delete-order="${order.id}">Delete</button></div></td>
       </tr>`;
     })
     .join("");
 }
 
 function renderLists() {
+  const monthlyBonusIncome = state.bonusIncomes.filter((income) => getMonthKey(income.date) === thisMonth()).reduce((sum, income) => sum + income.amount, 0);
+  document.querySelector("#bonusTotalLabel").textContent = `${money(monthlyBonusIncome)} this month`;
+  document.querySelector("#bonusIncomeList").innerHTML = entryHtml(
+    state.bonusIncomes,
+    (income) => `${income.source}<small>${income.date} â€¢ ${income.receivedBy || "Not specified"} â€¢ ${income.notes || "No notes"}</small>`,
+    (income) => money(income.amount)
+  );
   document.querySelector("#expenseTotalLabel").textContent = `${money(state.expenses.filter((e) => getMonthKey(e.date) === thisMonth()).reduce((s, e) => s + e.amount, 0))} this month`;
-  document.querySelector("#expenseList").innerHTML = entryHtml(state.expenses, (e) => `${e.category}<small>${e.date} â€¢ ${e.paidBy || "Not specified"} â€¢ ${e.notes || "No notes"}</small>`, (e) => money(e.amount));
+  document.querySelector("#expenseList").innerHTML = entryHtml(state.expenses, (e) => `${e.category}<small>${e.date} • ${e.paidBy || "Not specified"} • ${e.notes || "No notes"}</small>`, (e) => money(e.amount));
   document.querySelector("#assetTotalLabel").textContent = `${money(state.assets.reduce((s, a) => s + asNumber(a.currentValue || a.amount), 0))} total`;
-  document.querySelector("#assetList").innerHTML = entryHtml(state.assets, (a) => `${a.name}<small>${a.date} â€¢ Invested ${money(a.amount)}</small>`, (a) => money(a.currentValue || a.amount));
+  document.querySelector("#assetList").innerHTML = entryHtml(state.assets, (a) => `${a.name}<small>${a.date} • Invested ${money(a.amount)}</small>`, (a) => money(a.currentValue || a.amount));
   const openLiabilityTotal = state.liabilities.filter((l) => l.status === "open").reduce((s, l) => s + l.amount, 0);
   document.querySelector("#liabilityTotalLabel").textContent = `${money(openLiabilityTotal)} open`;
-  document.querySelector("#liabilityList").innerHTML = entryHtml(state.liabilities, (l) => `${l.name}<small>${l.dueDate} â€¢ ${l.status}</small>`, (l) => money(l.amount));
+  document.querySelector("#liabilityList").innerHTML = entryHtml(state.liabilities, (l) => `${l.name}<small>${l.dueDate} • ${l.status}</small>`, (l) => money(l.amount));
   document.querySelector("#productCountLabel").textContent = `${state.products.length} products`;
-  document.querySelector("#productList").innerHTML = entryHtml(state.products, (p) => `${p.name}<small>${p.sku || "No SKU"} â€¢ Cost ${money(p.cost)}</small>`, (p) => money(p.price));
+  document.querySelector("#productList").innerHTML = entryHtml(state.products, (p) => `${p.name}<small>${p.sku || "No SKU"} • Cost ${money(p.cost)}</small>`, (p) => money(p.price));
 }
 
 function entryHtml(items, titleFn, amountFn) {
@@ -627,6 +670,59 @@ function renderInvoice(order) {
   document.querySelector("#invoiceDialog").showModal();
 }
 
+function renderOrderDetail(order) {
+  if (!order) return;
+  activeDetailOrder = order;
+  const totals = calculateOrder(order);
+  document.querySelector("#orderDetailContent").innerHTML = `
+    <div class="invoice-header">
+      <div>
+        <h2>${order.customerName}</h2>
+        <p>${order.customerContact || "No contact saved"}</p>
+      </div>
+      <div>
+        <strong>${order.orderNumber}</strong>
+        <p>${order.date}<br />${order.paymentStatus}</p>
+      </div>
+    </div>
+    <div class="detail-grid">
+      <div class="detail-field"><span>Subtotal</span><strong>${money(totals.subtotal)}</strong></div>
+      <div class="detail-field"><span>Discount</span><strong>${money(totals.discount)}</strong></div>
+      <div class="detail-field"><span>Delivery Charged</span><strong>${money(order.deliveryFee)}</strong></div>
+      <div class="detail-field"><span>Delivery Cost To You</span><strong>${money(order.deliveryCost)}</strong></div>
+      <div class="detail-field"><span>Total Paid By Customer</span><strong>${money(totals.total)}</strong></div>
+      <div class="detail-field"><span>Profit</span><strong>${money(totals.profit)}</strong></div>
+    </div>
+    <table>
+      <thead><tr><th>Item</th><th>Qty</th><th>Cost</th><th>Price</th><th>Total</th></tr></thead>
+      <tbody>${order.items.map((item) => `<tr><td>${item.name}</td><td>${item.qty}</td><td>${money(item.cost)}</td><td>${money(item.price)}</td><td>${money(item.qty * item.price)}</td></tr>`).join("")}</tbody>
+    </table>
+    <p><strong>Notes:</strong> ${order.notes || "No notes saved."}</p>
+  `;
+  document.querySelector("#orderDetailDialog").showModal();
+}
+
+function startEditOrder(order) {
+  if (!order) return;
+  editingOrderId = order.id;
+  setView("orders");
+  document.querySelector("#customerName").value = order.customerName || "";
+  document.querySelector("#customerContact").value = order.customerContact || "";
+  document.querySelector("#orderDate").value = order.date || today;
+  document.querySelector("#discountType").value = order.discountType || "flat";
+  document.querySelector("#discountValue").value = order.discountValue || 0;
+  document.querySelector("#deliveryFee").value = order.deliveryFee || 0;
+  document.querySelector("#deliveryCost").value = order.deliveryCost || 0;
+  document.querySelector("#paymentStatus").value = order.paymentStatus || "paid";
+  document.querySelector("#orderNotes").value = order.notes || "";
+  document.querySelector("#itemsContainer").innerHTML = "";
+  (order.items.length ? order.items : [{}]).forEach((item) => addItemRow(item));
+  document.querySelector("#saveOrderBtn").textContent = "Update Order";
+  document.querySelector("#cancelEditOrderBtn").classList.remove("hidden");
+  updateOrderPreview();
+  document.querySelector("#orderForm").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 function invoiceText(order) {
   const totals = calculateOrder(order);
   const items = order.items.map((item) => `${item.name} x${item.qty}: ${money(item.qty * item.price)}`).join("\n");
@@ -644,10 +740,14 @@ function renderAll() {
 }
 
 function resetOrderForm() {
+  editingOrderId = null;
   document.querySelector("#orderForm").reset();
   document.querySelector("#orderDate").value = today;
   document.querySelector("#itemsContainer").innerHTML = "";
   addItemRow();
+  document.querySelector("#saveOrderBtn").textContent = "Save Order";
+  document.querySelector("#cancelEditOrderBtn").classList.add("hidden");
+  updateOrderPreview();
 }
 
 document.querySelectorAll("[data-view], [data-view-shortcut]").forEach((button) => {
@@ -665,10 +765,11 @@ document.querySelector("#customerName").addEventListener("change", (event) => {
 document.querySelector("#orderForm").addEventListener("submit", (event) => {
   event.preventDefault();
   const date = document.querySelector("#orderDate").value || today;
+  const existingOrder = editingOrderId ? state.orders.find((order) => order.id === editingOrderId) : null;
   const order = {
-    id: crypto.randomUUID(),
-    createdAt: new Date().toISOString(),
-    orderNumber: generateOrderNumber(date),
+    id: existingOrder?.id || crypto.randomUUID(),
+    createdAt: existingOrder?.createdAt || new Date().toISOString(),
+    orderNumber: existingOrder?.orderNumber || generateOrderNumber(date),
     customerName: document.querySelector("#customerName").value.trim(),
     customerContact: document.querySelector("#customerContact").value.trim(),
     date,
@@ -681,24 +782,58 @@ document.querySelector("#orderForm").addEventListener("submit", (event) => {
     items: getDraftItems().filter((item) => item.name && item.qty > 0)
   };
   if (!order.items.length) return toast("Add at least one product.");
-  state.orders.push(order);
+  if (existingOrder) state.orders = state.orders.map((item) => (item.id === existingOrder.id ? order : item));
+  else state.orders.push(order);
   if (!state.customers.some((c) => c.name.toLowerCase() === order.customerName.toLowerCase())) {
     state.customers.push({ id: crypto.randomUUID(), name: order.customerName, contact: order.customerContact });
   }
   saveState();
   resetOrderForm();
-  toast("Order saved.");
+  toast(existingOrder ? "Order updated." : "Order saved.");
 });
 
 document.querySelector("#ordersTable").addEventListener("click", (event) => {
+  const viewOrderId = event.target.dataset.viewOrder;
   const invoiceId = event.target.dataset.invoice;
   const deleteId = event.target.dataset.deleteOrder;
+  if (viewOrderId) renderOrderDetail(state.orders.find((order) => order.id === viewOrderId));
   if (invoiceId) renderInvoice(state.orders.find((order) => order.id === invoiceId));
   if (deleteId) {
     state.orders = state.orders.filter((order) => order.id !== deleteId);
     saveState();
     toast("Order deleted.");
   }
+});
+
+document.querySelector("#cancelEditOrderBtn").addEventListener("click", () => {
+  resetOrderForm();
+  toast("Edit cancelled.");
+});
+
+document.querySelector("#closeOrderDetail").addEventListener("click", () => document.querySelector("#orderDetailDialog").close());
+document.querySelector("#invoiceFromDetail").addEventListener("click", () => {
+  document.querySelector("#orderDetailDialog").close();
+  renderInvoice(activeDetailOrder);
+});
+document.querySelector("#editOrderFromDetail").addEventListener("click", () => {
+  document.querySelector("#orderDetailDialog").close();
+  startEditOrder(activeDetailOrder);
+});
+
+document.querySelector("#bonusIncomeForm").addEventListener("submit", (event) => {
+  event.preventDefault();
+  state.bonusIncomes.push({
+    id: crypto.randomUUID(),
+    source: document.querySelector("#bonusSource").value.trim(),
+    amount: asNumber(document.querySelector("#bonusAmount").value),
+    date: document.querySelector("#bonusDate").value || today,
+    receivedBy: document.querySelector("#bonusReceivedBy").value.trim(),
+    notes: document.querySelector("#bonusNotes").value.trim()
+  });
+  event.target.reset();
+  document.querySelector("#bonusDate").value = today;
+  saveState();
+  toast("Bonus income saved.");
 });
 
 document.querySelector("#expenseForm").addEventListener("submit", (event) => {
@@ -751,7 +886,7 @@ document.querySelector("#settingsForm").addEventListener("submit", (event) => {
   event.preventDefault();
   state.settings = {
     businessName: document.querySelector("#settingBusinessName").value.trim() || "Heart Health Hub",
-    currency: document.querySelector("#settingCurrency").value.trim() || "â‚¦",
+    currency: document.querySelector("#settingCurrency").value.trim() || "₦",
     bufferPercent: asNumber(document.querySelector("#settingBuffer").value),
     tagline: document.querySelector("#settingTagline").value.trim()
   };
@@ -901,7 +1036,7 @@ document.querySelector("#exportBtn").addEventListener("click", () => {
   URL.revokeObjectURL(url);
 });
 
-["orderDate", "expenseDate", "assetDate", "liabilityDate"].forEach((id) => {
+["orderDate", "bonusDate", "expenseDate", "assetDate", "liabilityDate"].forEach((id) => {
   document.querySelector(`#${id}`).value = today;
 });
 
