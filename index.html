@@ -9,7 +9,7 @@
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon.svg" />
     <title>HHH-FINANCE</title>
-    <link rel="stylesheet" href="styles.css?v=6" />
+    <link rel="stylesheet" href="styles.css?v=7" />
   </head>
   <body>
     <section class="auth-screen hidden" id="authScreen">
@@ -82,9 +82,9 @@
               <small id="expenseCount">0 entries</small>
             </article>
             <article class="metric spendable">
-              <span>Spendable Cash</span>
-              <strong id="spendableCash">â‚¦0</strong>
-              <small id="bufferText">After savings buffer</small>
+              <span>Founder Salary</span>
+              <strong id="founderSalary">â‚¦0</strong>
+              <small id="founderSalaryText">15% of monthly net profit</small>
             </article>
           </div>
 
@@ -126,26 +126,6 @@
                 <h2>Log Order</h2>
                 <span id="nextOrderNumber">Next order number</span>
               </div>
-              <section class="ai-capture">
-                <div class="panel-head compact-head">
-                  <div>
-                    <h3>Photo To Order Draft</h3>
-                    <p class="sync-detail">Take or upload a photo, then review the extracted details before saving.</p>
-                  </div>
-                </div>
-                <label>
-                  Order Image
-                  <input type="file" id="orderImageInput" accept="image/*" capture="environment" />
-                </label>
-                <div class="image-preview hidden" id="orderImagePreviewWrap">
-                  <img id="orderImagePreview" alt="Order upload preview" />
-                </div>
-                <div class="top-actions ai-actions">
-                  <button type="button" class="primary-btn" id="extractOrderBtn">Extract Details</button>
-                  <button type="button" class="ghost-btn" id="clearOrderImageBtn">Clear</button>
-                </div>
-                <p class="sync-detail" id="orderExtractStatus">Works best with screenshots, handwritten order notes, or chat/order confirmation photos.</p>
-              </section>
               <div class="field-grid">
                 <label>
                   Customer Name
@@ -391,6 +371,6 @@
     </dialog>
 
     <div class="toast" id="toast" role="status"></div>
-    <script src="app.js?v=6"></script>
+    <script src="app.js?v=7"></script>
   </body>
 </html>
