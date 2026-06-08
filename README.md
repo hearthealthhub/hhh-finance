@@ -5,11 +5,12 @@ HHH-FINANCE is a mobile-first finance dashboard for Heart Health Hub.
 It helps track:
 
 - orders and invoices
+- bonus income
 - products and pricing
 - expenses
 - assets
 - liabilities
-- monthly revenue, profit, and spendable cash
+- monthly income, profit, and founder salary
 
 The app is a Progressive Web App, so it can be installed on a phone or laptop from the browser.
 
@@ -50,4 +51,6 @@ The Remotion composition is in `remotion/`. A fallback renderer script is in `sc
 
 ## Notes
 
-The Supabase anon key is intentionally not hard-coded in this repo. Add it in the app's Settings screen when connecting a browser/device.
+Supabase sync is built into the app with a public publishable key. Row-level security keeps the shared business records available only to approved signed-in members.
+
+Orders can be opened from the Orders table, reviewed in full, edited, and saved back to the same order number. Bonus income is tracked separately from orders, then included in monthly income, net profit, and the 15% founder salary calculation.
