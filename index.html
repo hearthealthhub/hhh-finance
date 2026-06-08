@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#147a5c" />
+    <meta name="description" content="HHH-FINANCE business finance dashboard for Heart Health Hub." />
+    <link rel="manifest" href="manifest.json" />
+    <link rel="icon" href="icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icon.svg" />
+    <title>HHH-FINANCE</title>
+    <link rel="stylesheet" href="styles.css?v=4" />
+  </head>
+  <body>
+    <section class="auth-screen hidden" id="authScreen">
+      <form class="auth-card" id="authForm">
+        <div class="brand auth-brand">
+          <div class="brand-mark">ðŸ’°</div>
+          <div>
+            <strong>HHH-FINANCE</strong>
+            <span>Heart Health Hub</span>
+          </div>
+        </div>
+        <div>
+          <h1>Sign in</h1>
+          <p class="sync-detail" id="authMessage">Use your email and password to access the shared finance dashboard.</p>
+        </div>
+        <label>Email<input type="email" id="authEmail" autocomplete="email" required /></label>
+        <label>Password<input type="password" id="authPassword" autocomplete="current-password" minlength="6" required /></label>
+        <button class="primary-btn full" type="submit">Sign In</button>
+        <button class="ghost-btn full" type="button" id="createAccountBtn">Create Account</button>
+      </form>
+    </section>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">ðŸ’°</div>
+          <div>
+            <strong id="brandName">Family Business</strong>
+            <span>HHH-FINANCE</span>
+          </div>
+        </div>
+        <nav class="nav" aria-label="Main sections">
+          <button class="nav-item active" data-view="dashboard">Dashboard</button>
+          <button class="nav-item" data-view="orders">Orders</button>
+          <button class="nav-item" data-view="expenses">Expenses</button>
+          <button class="nav-item" data-view="assets">Assets</button>
+          <button class="nav-item" data-view="liabilities">Liabilities</button>
+          <button class="nav-item" data-view="settings">Settings</button>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Today</p>
+            <h1 id="pageTitle">Dashboard</h1>
+          </div>
+          <div class="top-actions">
+            <span class="sync-pill offline" id="syncStatus">Local only</span>
+            <button class="ghost-btn" id="accountBtn">Account</button>
+            <button class="ghost-btn" id="exportBtn">Export</button>
+            <button class="primary-btn" data-view-shortcut="orders">New Order</button>
+          </div>
+        </header>
+
+        <section class="view active" id="dashboardView">
+          <div class="metrics-grid">
+            <article class="metric net-profit">
+              <span>Net Profit This Month</span>
+              <strong id="netProfit">â‚¦0</strong>
+              <small id="profitMargin">0% margin</small>
+            </article>
+            <article class="metric">
+              <span>Revenue</span>
+              <strong id="monthlyRevenue">â‚¦0</strong>
+              <small id="monthlyOrders">0 orders</small>
+            </article>
+            <article class="metric">
+              <span>Expenses</span>
+              <strong id="monthlyExpenses">â‚¦0</strong>
+              <small id="expenseCount">0 entries</small>
+            </article>
+            <article class="metric spendable">
+              <span>Spendable Cash</span>
+              <strong id="spendableCash">â‚¦0</strong>
+              <small id="bufferText">After savings buffer</small>
+            </article>
+          </div>
+
+          <div class="dashboard-grid">
+            <section class="panel">
+              <div class="panel-head">
+                <h2>3-Month Trend</h2>
+                <span>Revenue, expenses, profit</span>
+              </div>
+              <div class="trend-chart" id="trendChart"></div>
+            </section>
+            <section class="panel">
+              <div class="panel-head">
+                <h2>Business Snapshot</h2>
+                <span>Cash position and obligations</span>
+              </div>
+              <div class="snapshot-list">
+                <div><span>Total assets</span><strong id="totalAssets">â‚¦0</strong></div>
+                <div><span>Open liabilities</span><strong id="openLiabilities">â‚¦0</strong></div>
+                <div><span>Net worth snapshot</span><strong id="netWorth">â‚¦0</strong></div>
+                <div><span>Average order value</span><strong id="avgOrderValue">â‚¦0</strong></div>
+              </div>
+            </section>
+          </div>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Recent Activity</h2>
+              <span>Latest orders and costs</span>
+            </div>
+            <div class="activity-list" id="activityList"></div>
+          </section>
+        </section>
+
+        <section class="view" id="ordersView">
+          <div class="split-layout">
+            <form class="panel form-panel" id="orderForm">
+              <div class="panel-head">
+                <h2>Log Order</h2>
+                <span id="nextOrderNumber">Next order number</span>
+              </div>
+              <div class="field-grid">
+                <label>
+                  Customer Name
+                  <input list="customerList" id="customerName" required placeholder="Start typing a customer" />
+                  <datalist id="customerList"></datalist>
+                </label>
+                <label>
+                  Customer Contact
+                  <input id="customerContact" placeholder="Phone, WhatsApp, or email" />
+                </label>
+                <label>
+                  Order Date
+                  <input type="date" id="orderDate" required />
+                </label>
+                <label>
+                  Discount Type
+                  <select id="discountType">
+                    <option value="flat">Flat amount</option>
+                    <option value="percent">Percentage</option>
+                  </select>
+                </label>
+                <label>
+                  Discount
+                  <input type="number" id="discountValue" min="0" step="100" value="0" />
+                </label>
+                <label>
+                  Delivery Charged
+                  <input type="number" id="deliveryFee" min="0" step="100" value="0" />
+                </label>
+                <label>
+                  Delivery Cost To You
+                  <input type="number" id="deliveryCost" min="0" step="100" value="0" />
+                </label>
+                <label>
+                  Payment Status
+                  <select id="paymentStatus">
+                    <option value="paid">Paid</option>
+                    <option value="pending">Pending</option>
+                    <option value="partial">Partial</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="line-items">
+                <div class="line-head">
+                  <h3>Goods Ordered</h3>
+                  <button type="button" class="ghost-btn small" id="addItemBtn">Add Item</button>
+                </div>
+                <div id="itemsContainer"></div>
+              </div>
+
+              <label>
+                Notes
+                <textarea id="orderNotes" rows="3" placeholder="Delivery note, customer request, follow-up"></textarea>
+              </label>
+
+              <div class="totals-box">
+                <div><span>Subtotal</span><strong id="orderSubtotal">â‚¦0</strong></div>
+                <div><span>Discount</span><strong id="orderDiscount">â‚¦0</strong></div>
+                <div><span>Total Due</span><strong id="orderTotal">â‚¦0</strong></div>
+                <div><span>Estimated Profit</span><strong id="orderProfit">â‚¦0</strong></div>
+              </div>
+
+              <button class="primary-btn full" type="submit">Save Order</button>
+            </form>
+
+            <section class="panel">
+              <div class="panel-head">
+                <h2>Orders</h2>
+                <span id="orderCountLabel">0 saved</span>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Order</th>
+                      <th>Customer</th>
+                      <th>Total</th>
+                      <th>Profit</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="ordersTable"></tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="expensesView">
+          <div class="split-layout compact">
+            <form class="panel form-panel" id="expenseForm">
+              <div class="panel-head">
+                <h2>Log Expense</h2>
+                <span>Quick operational costs</span>
+              </div>
+              <div class="field-grid">
+                <label>
+                  Category
+                  <select id="expenseCategory">
+                    <option>Data / Airtime</option>
+                    <option>Transportation</option>
+                    <option>Advertisement / Marketing</option>
+                    <option>Packaging / Supplies</option>
+                    <option>Platform Fees</option>
+                    <option>Miscellaneous</option>
+                  </select>
+                </label>
+                <label>
+                  Amount
+                  <input type="number" id="expenseAmount" min="0" step="100" required />
+                </label>
+                <label>
+                  Date
+                  <input type="date" id="expenseDate" required />
+                </label>
+                <label>
+                  Paid By
+                  <input id="expensePaidBy" placeholder="You, your wife, business cash" />
+                </label>
+              </div>
+              <label>
+                Notes
+                <textarea id="expenseNotes" rows="3"></textarea>
+              </label>
+              <button class="primary-btn full" type="submit">Save Expense</button>
+            </form>
+            <section class="panel">
+              <div class="panel-head">
+                <h2>Expense Entries</h2>
+                <span id="expenseTotalLabel">â‚¦0 this month</span>
+              </div>
+              <div class="entry-list" id="expenseList"></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="assetsView">
+          <div class="split-layout compact">
+            <form class="panel form-panel" id="assetForm">
+              <div class="panel-head">
+                <h2>Assets</h2>
+                <span>Investments and owned value</span>
+              </div>
+              <div class="field-grid">
+                <label>Asset Name<input id="assetName" required placeholder="Mutual fund, stock, cash reserve" /></label>
+                <label>Amount Invested<input type="number" id="assetAmount" min="0" step="100" required /></label>
+                <label>Current Value<input type="number" id="assetCurrent" min="0" step="100" /></label>
+                <label>Date<input type="date" id="assetDate" required /></label>
+              </div>
+              <button class="primary-btn full" type="submit">Save Asset</button>
+            </form>
+            <section class="panel"><div class="panel-head"><h2>Assets</h2><span id="assetTotalLabel">â‚¦0 total</span></div><div class="entry-list" id="assetList"></div></section>
+          </div>
+        </section>
+
+        <section class="view" id="liabilitiesView">
+          <div class="split-layout compact">
+            <form class="panel form-panel" id="liabilityForm">
+              <div class="panel-head">
+                <h2>Liabilities</h2>
+                <span>Refunds, debts, and obligations</span>
+              </div>
+              <div class="field-grid">
+                <label>Liability Name<input id="liabilityName" required placeholder="Refund due, supplier balance" /></label>
+                <label>Amount<input type="number" id="liabilityAmount" min="0" step="100" required /></label>
+                <label>Due Date<input type="date" id="liabilityDate" required /></label>
+                <label>Status<select id="liabilityStatus"><option value="open">Open</option><option value="settled">Settled</option></select></label>
+              </div>
+              <button class="primary-btn full" type="submit">Save Liability</button>
+            </form>
+            <section class="panel"><div class="panel-head"><h2>Liabilities</h2><span id="liabilityTotalLabel">â‚¦0 open</span></div><div class="entry-list" id="liabilityList"></div></section>
+          </div>
+        </section>
+
+        <section class="view" id="settingsView">
+          <div class="split-layout compact">
+            <form class="panel form-panel" id="settingsForm">
+              <div class="panel-head">
+                <h2>Business Settings</h2>
+                <span>Controls dashboard calculations</span>
+              </div>
+              <div class="field-grid">
+                <label>Business Name<input id="settingBusinessName" /></label>
+                <label>Currency Symbol<input id="settingCurrency" maxlength="3" /></label>
+                <label>Savings Buffer %<input type="number" id="settingBuffer" min="0" max="100" /></label>
+                <label>Invoice Tagline<input id="settingTagline" /></label>
+              </div>
+              <button class="primary-btn full" type="submit">Save Settings</button>
+            </form>
+            <form class="panel form-panel" id="supabaseForm">
+              <div class="panel-head">
+                <h2>Supabase Sync</h2>
+                <span>Shared data across devices</span>
+              </div>
+              <div class="field-grid">
+                <label>Project URL<input id="supabaseUrl" placeholder="https://project-ref.supabase.co" /></label>
+                <label>Anon Key<input id="supabaseAnonKey" placeholder="Supabase anon public key" /></label>
+              </div>
+              <div class="top-actions">
+                <button class="primary-btn full" type="submit">Connect Supabase</button>
+                <button class="ghost-btn" type="button" id="disableSupabase">Use Local Only</button>
+              </div>
+              <p class="sync-detail" id="syncDetail">Enter your project URL and anon key to enable shared storage.</p>
+            </form>
+            <section class="panel">
+              <div class="panel-head">
+                <h2>Account</h2>
+                <span id="accountStatus">Not signed in</span>
+              </div>
+              <p class="sync-detail" id="accountDetail">Connect Supabase, then sign in to use shared data.</p>
+              <button class="ghost-btn full" id="signOutBtn" type="button">Sign Out</button>
+            </section>
+            <form class="panel form-panel" id="productForm">
+              <div class="panel-head">
+                <h2>Product Catalog</h2>
+                <span>Used for prices and profit</span>
+              </div>
+              <div class="field-grid">
+                <label>Product Name<input id="productName" required /></label>
+                <label>Cost Price<input type="number" id="productCost" min="0" step="100" required /></label>
+                <label>Selling Price<input type="number" id="productPrice" min="0" step="100" required /></label>
+                <label>SKU / Code<input id="productSku" /></label>
+              </div>
+              <button class="primary-btn full" type="submit">Add Product</button>
+            </form>
+          </div>
+          <section class="panel">
+            <div class="panel-head"><h2>Products</h2><span id="productCountLabel">0 products</span></div>
+            <div class="entry-list" id="productList"></div>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <dialog id="invoiceDialog">
+      <div class="invoice" id="invoiceContent"></div>
+      <div class="dialog-actions">
+        <button class="ghost-btn" id="closeInvoice">Close</button>
+        <button class="ghost-btn" id="copyInvoice">Copy Text</button>
+        <button class="primary-btn" id="printInvoice">Print / PDF</button>
+      </div>
+    </dialog>
+
+    <div class="toast" id="toast" role="status"></div>
+    <script src="app.js?v=4"></script>
+  </body>
+</html>
