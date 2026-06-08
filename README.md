@@ -38,6 +38,16 @@ Then open:
 http://127.0.0.1:4173
 ```
 
+## Onboarding Video
+
+The mobile onboarding video is saved at:
+
+```text
+videos/hhh-finance-onboarding.mp4
+```
+
+The Remotion composition is in `remotion/`. A fallback renderer script is in `scripts/render_onboarding_video.py`.
+
 ## Notes
 
 The Supabase anon key is intentionally not hard-coded in this repo. Add it in the app's Settings screen when connecting a browser/device.
