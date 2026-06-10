@@ -39,6 +39,7 @@ let state = loadState();
 let activeInvoiceOrder = null;
 let activeDetailOrder = null;
 let editingOrderId = null;
+let editingProductId = null;
 let isRemoteLoading = false;
 let syncMessage = "";
 
@@ -408,6 +409,27 @@ function calculateOrder(order) {
   return { subtotal, cost, discount, total, profit };
 }
 
+function findProductByName(name) {
+  const normalized = (name || "").trim().toLowerCase();
+  return state.products.find((product) => product.name.trim().toLowerCase() === normalized);
+}
+
+function saveNewOrderProducts(items) {
+  let savedCount = 0;
+  items.forEach((item) => {
+    if (!item.name.trim() || findProductByName(item.name)) return;
+    state.products.push({
+      id: crypto.randomUUID(),
+      name: item.name.trim(),
+      sku: "",
+      cost: item.cost,
+      price: item.price
+    });
+    savedCount += 1;
+  });
+  return savedCount;
+}
+
 function generateOrderNumber(dateString) {
   const now = new Date();
   const compactDate = dateString.replaceAll("-", "");
@@ -442,15 +464,15 @@ function addItemRow(item = {}) {
       <input type="number" class="item-qty" min="1" value="${item.qty || 1}" required />
     </label>
     <label>Price
-      <input type="number" class="item-price" min="0" step="1" value="${item.price || 0}" required />
+      <input type="number" class="item-price" min="0" step="1" placeholder="0" value="${item.price || ""}" required />
     </label>
     <label>Cost
-      <input type="number" class="item-cost" min="0" step="1" value="${item.cost || 0}" required />
+      <input type="number" class="item-cost" min="0" step="1" placeholder="0" value="${item.cost || ""}" required />
     </label>
     <button class="icon-btn" type="button" title="Remove item">×</button>
   `;
   row.querySelector(".item-product").addEventListener("change", (event) => {
-    const product = state.products.find((p) => p.name === event.target.value);
+    const product = findProductByName(event.target.value);
     if (!product) return;
     row.querySelector(".item-price").value = product.price;
     row.querySelector(".item-cost").value = product.cost;
@@ -617,6 +639,32 @@ function entryHtml(items, titleFn, amountFn) {
     : `<div class="entry"><div><strong>No entries yet</strong><small>Saved records will appear here.</small></div></div>`;
 }
 
+function renderProductList() {
+  document.querySelector("#productCountLabel").textContent = `${state.products.length} products`;
+  document.querySelector("#productList").innerHTML = state.products.length
+    ? state.products
+        .slice()
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map(
+          (product) => `
+            <div class="entry product-entry">
+              <div>
+                <strong>${product.name}</strong>
+                <small>${product.sku || "No SKU"} • Cost ${money(product.cost)}</small>
+              </div>
+              <div class="entry-actions">
+                <strong>${money(product.price)}</strong>
+                <div class="table-actions">
+                  <button class="ghost-btn small" data-edit-product="${product.id}">Edit</button>
+                  <button class="ghost-btn small" data-delete-product="${product.id}">Delete</button>
+                </div>
+              </div>
+            </div>`
+        )
+        .join("")
+    : `<div class="entry"><div><strong>No products yet</strong><small>Saved products will appear here.</small></div></div>`;
+}
+
 function renderSettings() {
   document.querySelector("#brandName").textContent = state.settings.businessName;
   document.querySelector("#settingBusinessName").value = state.settings.businessName;
@@ -643,6 +691,7 @@ function renderDatalists() {
 function renderInvoice(order) {
   activeInvoiceOrder = order;
   const totals = calculateOrder(order);
+  const discountRow = totals.discount > 0 ? `<div><span>Discount</span><strong>${money(totals.discount)}</strong></div>` : "";
   document.querySelector("#invoiceContent").innerHTML = `
     <div class="invoice-header">
       <div>
@@ -661,7 +710,7 @@ function renderInvoice(order) {
     </table>
     <div class="totals-box">
       <div><span>Subtotal</span><strong>${money(totals.subtotal)}</strong></div>
-      <div><span>Discount</span><strong>${money(totals.discount)}</strong></div>
+      ${discountRow}
       <div><span>Delivery</span><strong>${money(order.deliveryFee)}</strong></div>
       <div><span class="invoice-total">Total Due</span><strong class="invoice-total">${money(totals.total)}</strong></div>
     </div>
@@ -723,10 +772,31 @@ function startEditOrder(order) {
   document.querySelector("#orderForm").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
+function resetProductForm() {
+  editingProductId = null;
+  document.querySelector("#productForm").reset();
+  document.querySelector("#saveProductBtn").textContent = "Add Product";
+  document.querySelector("#cancelEditProductBtn").classList.add("hidden");
+}
+
+function startEditProduct(product) {
+  if (!product) return;
+  editingProductId = product.id;
+  setView("settings");
+  document.querySelector("#productName").value = product.name || "";
+  document.querySelector("#productCost").value = product.cost || "";
+  document.querySelector("#productPrice").value = product.price || "";
+  document.querySelector("#productSku").value = product.sku || "";
+  document.querySelector("#saveProductBtn").textContent = "Update Product";
+  document.querySelector("#cancelEditProductBtn").classList.remove("hidden");
+  document.querySelector("#productForm").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 function invoiceText(order) {
   const totals = calculateOrder(order);
   const items = order.items.map((item) => `${item.name} x${item.qty}: ${money(item.qty * item.price)}`).join("\n");
-  return `${state.settings.businessName}\nInvoice ${order.orderNumber}\nCustomer: ${order.customerName}\n\n${items}\n\nDiscount: ${money(totals.discount)}\nDelivery: ${money(order.deliveryFee)}\nTotal Due: ${money(totals.total)}\n\n${state.settings.tagline}`;
+  const discountLine = totals.discount > 0 ? `Discount: ${money(totals.discount)}\n` : "";
+  return `${state.settings.businessName}\nInvoice ${order.orderNumber}\nCustomer: ${order.customerName}\n\n${items}\n\n${discountLine}Delivery: ${money(order.deliveryFee)}\nTotal Due: ${money(totals.total)}\n\n${state.settings.tagline}`;
 }
 
 function renderAll() {
@@ -735,6 +805,7 @@ function renderAll() {
   renderDashboard();
   renderOrders();
   renderLists();
+  renderProductList();
   updateOrderPreview();
   renderAuth();
 }
@@ -782,6 +853,7 @@ document.querySelector("#orderForm").addEventListener("submit", (event) => {
     items: getDraftItems().filter((item) => item.name && item.qty > 0)
   };
   if (!order.items.length) return toast("Add at least one product.");
+  const newProductsSaved = saveNewOrderProducts(order.items);
   if (existingOrder) state.orders = state.orders.map((item) => (item.id === existingOrder.id ? order : item));
   else state.orders.push(order);
   if (!state.customers.some((c) => c.name.toLowerCase() === order.customerName.toLowerCase())) {
@@ -789,7 +861,7 @@ document.querySelector("#orderForm").addEventListener("submit", (event) => {
   }
   saveState();
   resetOrderForm();
-  toast(existingOrder ? "Order updated." : "Order saved.");
+  toast(newProductsSaved ? `Order saved. ${newProductsSaved} new product saved.` : existingOrder ? "Order updated." : "Order saved.");
 });
 
 document.querySelector("#ordersTable").addEventListener("click", (event) => {
@@ -1006,16 +1078,38 @@ document.querySelector("#accountBtn").addEventListener("click", () => {
 
 document.querySelector("#productForm").addEventListener("submit", (event) => {
   event.preventDefault();
-  state.products.push({
-    id: crypto.randomUUID(),
+  const existingProduct = editingProductId ? state.products.find((product) => product.id === editingProductId) : null;
+  const product = {
+    id: existingProduct?.id || crypto.randomUUID(),
     name: document.querySelector("#productName").value.trim(),
     sku: document.querySelector("#productSku").value.trim(),
     cost: asNumber(document.querySelector("#productCost").value),
     price: asNumber(document.querySelector("#productPrice").value)
-  });
-  event.target.reset();
+  };
+  const duplicateProduct = state.products.find((item) => item.id !== product.id && item.name.trim().toLowerCase() === product.name.toLowerCase());
+  if (duplicateProduct) return toast("A product with this name already exists.");
+  if (existingProduct) state.products = state.products.map((item) => (item.id === product.id ? product : item));
+  else state.products.push(product);
+  resetProductForm();
   saveState();
-  toast("Product added.");
+  toast(existingProduct ? "Product updated." : "Product added.");
+});
+
+document.querySelector("#cancelEditProductBtn").addEventListener("click", () => {
+  resetProductForm();
+  toast("Product edit cancelled.");
+});
+
+document.querySelector("#productList").addEventListener("click", (event) => {
+  const editId = event.target.dataset.editProduct;
+  const deleteId = event.target.dataset.deleteProduct;
+  if (editId) startEditProduct(state.products.find((product) => product.id === editId));
+  if (deleteId) {
+    state.products = state.products.filter((product) => product.id !== deleteId);
+    if (editingProductId === deleteId) resetProductForm();
+    saveState();
+    toast("Product deleted.");
+  }
 });
 
 document.querySelector("#closeInvoice").addEventListener("click", () => document.querySelector("#invoiceDialog").close());
