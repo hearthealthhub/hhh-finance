@@ -159,7 +159,15 @@ function toRemote(table, record) {
     };
   }
   if (table === "customers") return { id: record.id, name: record.name, contact: record.contact };
-  if (table === "products") return record;
+  if (table === "products") {
+    return {
+      id: record.id,
+      name: record.name,
+      sku: record.sku,
+      cost: record.cost,
+      price: record.price
+    };
+  }
   if (table === "orders") {
     return {
       id: record.id,
@@ -228,7 +236,15 @@ function fromRemote(table, record) {
     };
   }
   if (table === "customers") return { id: record.id, name: record.name, contact: record.contact };
-  if (table === "products") return record;
+  if (table === "products") {
+    return {
+      id: record.id,
+      name: record.name,
+      sku: record.sku,
+      cost: record.cost,
+      price: record.price
+    };
+  }
   if (table === "orders") {
     return {
       id: record.id,
