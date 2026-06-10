@@ -475,6 +475,14 @@ td small {
 .table-actions {
   display: flex;
   gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.entry-actions {
+  display: grid;
+  gap: 8px;
+  justify-items: end;
 }
 
 .entry-list,
