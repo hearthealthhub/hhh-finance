@@ -9,7 +9,7 @@
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon.svg" />
     <title>HHH-FINANCE</title>
-    <link rel="stylesheet" href="styles.css?v=9" />
+    <link rel="stylesheet" href="styles.css?v=10" />
   </head>
   <body>
     <section class="auth-screen hidden" id="authScreen">
@@ -151,15 +151,15 @@
                 </label>
                 <label>
                   Discount
-                  <input type="number" id="discountValue" min="0" step="100" value="0" />
+                  <input type="number" id="discountValue" min="0" step="1" value="0" />
                 </label>
                 <label>
                   Delivery Charged
-                  <input type="number" id="deliveryFee" min="0" step="100" value="0" />
+                  <input type="number" id="deliveryFee" min="0" step="1" value="0" />
                 </label>
                 <label>
                   Delivery Cost To You
-                  <input type="number" id="deliveryCost" min="0" step="100" value="0" />
+                  <input type="number" id="deliveryCost" min="0" step="1" value="0" />
                 </label>
                 <label>
                   Payment Status
@@ -234,7 +234,7 @@
                 </label>
                 <label>
                   Amount
-                  <input type="number" id="bonusAmount" min="0" step="100" required />
+                  <input type="number" id="bonusAmount" min="0" step="1" required />
                 </label>
                 <label>
                   Date Received
@@ -282,7 +282,7 @@
                 </label>
                 <label>
                   Amount
-                  <input type="number" id="expenseAmount" min="0" step="100" required />
+                  <input type="number" id="expenseAmount" min="0" step="1" required />
                 </label>
                 <label>
                   Date
@@ -318,8 +318,8 @@
               </div>
               <div class="field-grid">
                 <label>Asset Name<input id="assetName" required placeholder="Mutual fund, stock, cash reserve" /></label>
-                <label>Amount Invested<input type="number" id="assetAmount" min="0" step="100" required /></label>
-                <label>Current Value<input type="number" id="assetCurrent" min="0" step="100" /></label>
+                <label>Amount Invested<input type="number" id="assetAmount" min="0" step="1" required /></label>
+                <label>Current Value<input type="number" id="assetCurrent" min="0" step="1" /></label>
                 <label>Date<input type="date" id="assetDate" required /></label>
               </div>
               <button class="primary-btn full" type="submit">Save Asset</button>
@@ -337,7 +337,7 @@
               </div>
               <div class="field-grid">
                 <label>Liability Name<input id="liabilityName" required placeholder="Refund due, supplier balance" /></label>
-                <label>Amount<input type="number" id="liabilityAmount" min="0" step="100" required /></label>
+                <label>Amount<input type="number" id="liabilityAmount" min="0" step="1" required /></label>
                 <label>Due Date<input type="date" id="liabilityDate" required /></label>
                 <label>Status<select id="liabilityStatus"><option value="open">Open</option><option value="settled">Settled</option></select></label>
               </div>
@@ -426,6 +426,6 @@
     </dialog>
 
     <div class="toast" id="toast" role="status"></div>
-    <script src="app.js?v=9"></script>
+    <script src="app.js?v=10"></script>
   </body>
 </html>
