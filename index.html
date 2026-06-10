@@ -9,7 +9,7 @@
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon.svg" />
     <title>HHH-FINANCE</title>
-    <link rel="stylesheet" href="styles.css?v=10" />
+    <link rel="stylesheet" href="styles.css?v=11" />
   </head>
   <body>
     <section class="auth-screen hidden" id="authScreen">
@@ -151,15 +151,15 @@
                 </label>
                 <label>
                   Discount
-                  <input type="number" id="discountValue" min="0" step="1" value="0" />
+                  <input type="number" id="discountValue" min="0" step="1" placeholder="0" />
                 </label>
                 <label>
                   Delivery Charged
-                  <input type="number" id="deliveryFee" min="0" step="1" value="0" />
+                  <input type="number" id="deliveryFee" min="0" step="1" placeholder="0" />
                 </label>
                 <label>
                   Delivery Cost To You
-                  <input type="number" id="deliveryCost" min="0" step="1" value="0" />
+                  <input type="number" id="deliveryCost" min="0" step="1" placeholder="0" />
                 </label>
                 <label>
                   Payment Status
@@ -392,11 +392,14 @@
               </div>
               <div class="field-grid">
                 <label>Product Name<input id="productName" required /></label>
-                <label>Cost Price<input type="number" id="productCost" min="0" step="100" required /></label>
-                <label>Selling Price<input type="number" id="productPrice" min="0" step="100" required /></label>
+                <label>Cost Price<input type="number" id="productCost" min="0" step="1" placeholder="0" required /></label>
+                <label>Selling Price<input type="number" id="productPrice" min="0" step="1" placeholder="0" required /></label>
                 <label>SKU / Code<input id="productSku" /></label>
               </div>
-              <button class="primary-btn full" type="submit">Add Product</button>
+              <div class="form-actions">
+                <button class="primary-btn full" id="saveProductBtn" type="submit">Add Product</button>
+                <button class="ghost-btn full hidden" id="cancelEditProductBtn" type="button">Cancel Edit</button>
+              </div>
             </form>
           </div>
           <section class="panel">
@@ -426,6 +429,6 @@
     </dialog>
 
     <div class="toast" id="toast" role="status"></div>
-    <script src="app.js?v=10"></script>
+    <script src="app.js?v=11"></script>
   </body>
 </html>
