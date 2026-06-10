@@ -442,10 +442,10 @@ function addItemRow(item = {}) {
       <input type="number" class="item-qty" min="1" value="${item.qty || 1}" required />
     </label>
     <label>Price
-      <input type="number" class="item-price" min="0" step="100" value="${item.price || 0}" required />
+      <input type="number" class="item-price" min="0" step="1" value="${item.price || 0}" required />
     </label>
     <label>Cost
-      <input type="number" class="item-cost" min="0" step="100" value="${item.cost || 0}" required />
+      <input type="number" class="item-cost" min="0" step="1" value="${item.cost || 0}" required />
     </label>
     <button class="icon-btn" type="button" title="Remove item">×</button>
   `;
